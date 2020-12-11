@@ -1,0 +1,90 @@
+Cloud Computing - Cloud computing is the on-demand delivery of compute power, database storage, applications, and other IT resources through a cloud services platform via the internet with pay-as-you-go pricing
+
+Six Advantages and Benefits of Cloud Computing
+    Trade capital expenses for variable expense
+    Benefit from massive economies of scale
+    Stop guessing capacity
+    Increase speed and agility
+    Stop spending money on running and maintaining data centers
+    Go global in minutes
+
+Choosing the regions -
+    latency
+    cost
+    compliance
+    service availability
+
+Regions - Collection of availability zone (Data Center)
+
+VPC
+
+
+
+Instance types comprise varying combinations of CPU, memory, storage, and networking capacity. They give you the flexibility to choose the appropriate mix of resources for your applications. Each instance type includes one or more instance sizes, which allows you to scale your resources to the requirements of your target workload.
+
+security groups are attached to the ENI
+Subnet could be only in one availability zone
+ENI can be one and only one availability zone
+Instance can be one and only one availability zone
+Route Table can be only associated with more than one subnet
+Route Table Can have one or more routes
+Route consists of a destination subnet address and a target(IGW or another ENI, instance, VPC peering connection)
+
+
+ssh -i "ec2try.pem" ec2-user@99.79.92.176
+
+
+VPC peering connections limitationas
+Inter region peering does not support IPv6
+Peered VPCs must not have overlapping IP CIDR blocks
+An instance in one VPC cannot use the IGW in a peered VPC or 
+
+
+Transit VPC 
+    - Minimize number of VPN connections
+    - Avoids limitations of VPC peering
+
+Workshops
+----------------------------------------
+
+Steps to create www1 in web-vpc
+1. Create VPC - 10.1.0.0/16
+2. Create Subnet - 10.1.254.0/24
+3. Create Route Table -  Subnet Associations - Associate with Subnet - Router is assigned an address of 10.1.254.1
+4. Create IGW - Attach to VPC
+5. In the Route Table - destination address(0.0.0.0/0) - IGW (Internet access)
+6. Create a security group - Inbound Rules - SSH - My ID, HTTP - Anywhere
+7. Elastic Network Interface - 10.1.254.10 - security group
+8  Allocate Elastic IPs -  Associate Address - Resource Type -> Netwrok Interface that was created. And the private IP
+9. Instances - Netwrok Interface - attach it to ENI.
+
+Steps to create shared-vpc
+1. Create VPC - 10.2.0.0/16
+2. Create Subnet - 10.2.2.0/24 - database
+3. Create Route Table -  Subnet Associations - Associate with Subnet
+4. Instance - network interface (10.2.2.41) -> security group  
+            ssh - 192.168.0.0/16, 10.2.0.0/16 Internal SSH or on prem
+            MySQL 10.1.254.0/24 - web-pub subnet
+
+VPC peering
+1. Create Peering connection RequesterVPC - web-vpc Acceptor VPC - shared-vpc - Accept Request to Peer
+2. Route Table - (web-vpc) - (10.2.2.0/24) (Database subnet) -> PCX
+3. Route Table - (shared-vpc) - (10.1.254.0/24) (Database subnet) -> PCX
+
+Egress only outbound access
+    Configuring Routing for a NAT instance
+        1. Create IGW - Attach to VPC
+        2. Create Subnet - 10.2.254.0/24 -  Subnet Associations - Associate with Subnet 
+        3. Route Tables - nat-pub  - Route 
+                (0.0.0.0/0) - IGW(Internet Access), Subnet Association - nat-pub subnet
+        4. Instance - 
+                Elastic IPs -  Allocate IPs and copy it
+                Netwrok interface - 10.2.254.254
+                Create a new security Group - 
+                    SSH - From My Machine
+                    All TCP - (10.0.0.0/8, 192.168.0.0/16)
+                    Disable source destination check from networking
+        5.In shared route table hosting db instance provide a route 0.0.0.0/0 -> nat1 instance
+
+Transit VPC
+    
